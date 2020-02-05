@@ -1,0 +1,7 @@
+set(CMAKE_C_COMPILER clang-cl)
+set(CMAKE_CXX_COMPILER clang-cl)
+set(CMAKE_RC_COMPILER llvm-rc)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address,undefined,fuzzer-no-link")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address,undefined,fuzzer-no-link")
+set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address,undefined")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
