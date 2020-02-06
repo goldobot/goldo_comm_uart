@@ -15,9 +15,13 @@
 
 void SerialCommHal::open(const char* port_name, int baudrate)
 {    
-    ROS_INFO_STREAM("Opening serial port " << port_name << " baudrate: "<<baudrate);
+    ROS_INFO_STREAM("Opening serial port " << port_name);
     m_fd = ::open(port_name, O_RDWR | O_NOCTTY | O_SYNC);
-    std::cout << m_fd;
+	if(m_fd == 0)
+	{
+		ROS_ERROR_STREAM("Failed to open serial port " << port_name);
+	}
+
     setInterfaceAttribs(baudrate);
     write(m_fd, "foobar", 6);
 }
@@ -31,15 +35,11 @@ void SerialCommHal::setInterfaceAttribs(int baudrate)
         return;
     }
 
-    cfsetospeed(&tty, (speed_t)baudrate);
-    cfsetispeed(&tty, (speed_t)baudrate);
+    cfsetospeed(&tty, (speed_t)B230400);
+    cfsetispeed(&tty, (speed_t)B230400);
     
-    tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;         /* 8-bit characters */
-    tty.c_cflag &= ~PARENB;     /* no parity bit */
-    tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-    tty.c_cflag &= ~CRTSCTS;    /* no hardware flowcontrol */
+    tty.c_cflag &= ~(CSIZE|CSTOPB|HUPCL|PARENB|CRTSCTS);
+    tty.c_cflag |= (CS8|PARODD|CLOCAL|CREAD);
 
     /* setup for non-canonical mode */
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
