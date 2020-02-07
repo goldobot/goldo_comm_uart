@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "goldo_comm_uart");
 
-  ros::NodeHandle n;
+  ros::NodeHandle n("comm_uart");
 
   ros::Publisher chatter_pub = n.advertise<std_msgs::String>("messages/raw", 1000);
 
@@ -20,8 +20,8 @@ int main(int argc, char **argv)
   
   std::string port_name;
   int baudrate;
-  n.getParam("/goldo/comm_uart/port_name", port_name);
-  n.getParam("/goldo/comm_uart/baudrate", baudrate);
+  n.getParam("port", port_name);
+  n.getParam("baudrate", baudrate);
 
   
   SerialCommHal serial_comm_hal;

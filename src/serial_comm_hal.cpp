@@ -12,6 +12,33 @@
 
 #include <iostream>
 
+SerialCommHal::~SerialCommHal()
+{
+}
+
+uint8_t* SerialCommHal::lock_read(size_t& buffer_size)
+{
+	return m_read_buffer;
+}
+
+void SerialCommHal::unlock_read(size_t buffer_size)
+{
+	
+}
+
+uint8_t* SerialCommHal::lock_write(size_t& buffer_size)
+{
+	if(buffer_size > sizeof(m_write_buffer))
+	{
+		buffer_size = sizeof(m_write_buffer);
+	};
+	return m_write_buffer;
+}
+
+void SerialCommHal::unlock_write(size_t buffer_size) 
+{
+	write(m_fd, m_write_buffer, buffer_size);
+}
 
 void SerialCommHal::open(const char* port_name, int baudrate)
 {    
