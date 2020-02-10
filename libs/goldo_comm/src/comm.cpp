@@ -1,6 +1,8 @@
 #include "goldo_comm/comm.hpp"
 #include "goldo_comm/crc32c.hpp"
 
+#include <iostream>
+
 using namespace goldo_comm;
 
 void Comm::setHal(CommHal* hal) { m_hal_ptr = hal; }
@@ -114,8 +116,9 @@ bool Comm::spinSend() {
   }
   m_send_queue.pop_message();
   m_encoder.end_message();
-  size_t out_size = 16;
+  size_t out_size = 256;
   uint8_t* out_ptr = m_hal_ptr->lock_write(out_size);
+  std::cout << out_size << "\n";
   out_size = m_encoder.flush(out_ptr, out_size);
   m_hal_ptr->unlock_write(out_size);
   return true;

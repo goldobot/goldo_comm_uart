@@ -32,11 +32,13 @@ uint8_t* SerialCommHal::lock_write(size_t& buffer_size)
 	{
 		buffer_size = sizeof(m_write_buffer);
 	};
+	ROS_INFO_STREAM("Lock " << buffer_size <<"bytes");
 	return m_write_buffer;
 }
 
 void SerialCommHal::unlock_write(size_t buffer_size) 
 {
+	ROS_INFO_STREAM("Write " << buffer_size <<"bytes");
 	write(m_fd, m_write_buffer, buffer_size);
 }
 
@@ -48,9 +50,7 @@ void SerialCommHal::open(const char* port_name, int baudrate)
 	{
 		ROS_ERROR_STREAM("Failed to open serial port " << port_name);
 	}
-
     setInterfaceAttribs(baudrate);
-    write(m_fd, "foobar", 6);
 }
 
 void SerialCommHal::setInterfaceAttribs(int baudrate)
