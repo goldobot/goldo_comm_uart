@@ -37,20 +37,20 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "goldo_comm_uart");
 
-  ros::NodeHandle n("comm_uart");
+  ros::NodeHandle n;
 
-  ros::Publisher chatter_pub = n.advertise<goldo_comm_uart::RawMessage>("out/raw", 1000);  
-  ros::Publisher console_pub = n.advertise<std_msgs::String>("out/console", 1000);
+  ros::Publisher chatter_pub = n.advertise<goldo_comm_uart::RawMessage>("stm32/out/raw", 1000);  
+  ros::Publisher console_pub = n.advertise<std_msgs::String>("stm32/out/console", 1000);
   
-  ros::Subscriber raw_message_sub = n.subscribe<goldo_comm_uart::RawMessage>("in/raw", 1000, chatterCallback);  
-  ros::Subscriber console_sub = n.subscribe<std_msgs::String>("in/console", 1000, consoleCallback);
+  ros::Subscriber raw_message_sub = n.subscribe<goldo_comm_uart::RawMessage>("stm32/in/raw", 1000, chatterCallback);  
+  ros::Subscriber console_sub = n.subscribe<std_msgs::String>("stm32/in/console", 1000, consoleCallback);
 
   ros::Rate loop_rate(1000);
   
   std::string port_name;
   int baudrate;
-  n.getParam("port", port_name);
-  n.getParam("baudrate", baudrate);
+  ros::param::get("~port", port_name);
+  ros::param::get("~baudrate", baudrate);
 
   
   SerialCommHal serial_comm_hal;
