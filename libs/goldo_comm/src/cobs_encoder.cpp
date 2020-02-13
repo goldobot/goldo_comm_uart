@@ -4,11 +4,19 @@
 
 using namespace goldo_comm;
 
-inline void CobsEncoder::inc_ptr(iterator& it) {
-  it++;
-  if (it == m_buffer.end()) {
-    it = m_buffer.begin();
+inline CobsEncoder::iterator CobsEncoder::next_ptr(iterator it) {
+	auto ret = it + 1;
+  if (ret == m_buffer.end()) {
+	  ret = m_buffer.begin();
   }
+  return ret;
+}
+
+inline void CobsEncoder::inc_ptr(iterator& it) {
+	it++;
+	if (it == m_buffer.end()) {
+		it = m_buffer.begin();
+	}
 }
 
 inline ptrdiff_t CobsEncoder::ptr_diff(iterator a, iterator b) {
@@ -39,6 +47,18 @@ void CobsEncoder::encode(const uint8_t* in_ptr, size_t& in_size,
   uint8_t* out_end = out_ptr + out_size;
 
   while (in_ptr != in_end && out_ptr != out_end) {
+	  if (next_ptr(m_write_ptr) == m_read_ptr)
+	  {
+		  auto flushed_size = flush(out_ptr, out_end - out_ptr);
+		  out_ptr += flushed_size;
+		  if (flushed_size == 0)
+		  {
+			  in_size = in_ptr - in_beg;
+			  out_size = out_ptr - out_beg;
+			  return;
+		  }
+	  }
+
     uint8_t len_code = ptr_diff(m_write_ptr, m_code_ptr);
 
     if (len_code == 255) {
@@ -57,10 +77,11 @@ void CobsEncoder::encode(const uint8_t* in_ptr, size_t& in_size,
     }
     inc_ptr(m_write_ptr);
   }
-
+  out_ptr += flush(out_ptr, out_end - out_ptr);
   in_size = in_ptr - in_beg;
   out_size = out_ptr - out_beg;
 }
+
 size_t CobsEncoder::flush(uint8_t* buffer, size_t buffer_size) {
   if (m_code_ptr >= m_read_ptr) {
     size_t out_size = std::min<size_t>(m_code_ptr - m_read_ptr, buffer_size);

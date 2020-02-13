@@ -11,6 +11,7 @@
 #include "goldo_comm/comm.hpp"
 
 #include <iostream>
+#include <algorithm>
 
 SerialCommHal::~SerialCommHal()
 {
@@ -18,6 +19,15 @@ SerialCommHal::~SerialCommHal()
 
 uint8_t* SerialCommHal::lock_read(size_t& buffer_size)
 {
+	
+	auto ret = read(m_fd, m_read_buffer, buffer_size);
+	if(ret != -1)
+	{
+		buffer_size = ret;
+	} else
+	{
+		buffer_size = 0;
+	};
 	return m_read_buffer;
 }
 
@@ -31,14 +41,12 @@ uint8_t* SerialCommHal::lock_write(size_t& buffer_size)
 	if(buffer_size > sizeof(m_write_buffer))
 	{
 		buffer_size = sizeof(m_write_buffer);
-	};
-	ROS_INFO_STREAM("Lock " << buffer_size <<"bytes");
+	};	
 	return m_write_buffer;
 }
 
 void SerialCommHal::unlock_write(size_t buffer_size) 
 {
-	ROS_INFO_STREAM("Write " << buffer_size <<"bytes");
 	write(m_fd, m_write_buffer, buffer_size);
 }
 
@@ -58,12 +66,59 @@ void SerialCommHal::setInterfaceAttribs(int baudrate)
         struct termios tty;
 
     if (tcgetattr(m_fd, &tty) < 0) {
-        //printf("Error from tcgetattr: %s\n", strerror(errno));
+        ROS_ERROR_STREAM("Error from tcgetattr: " << strerror(errno) << "\n");
         return;
     }
+	
+	speed_t baudrate_enum = B9600;
+	switch(baudrate)
+	{
+		case 9600:
+		  baudrate_enum = B9600;
+		  break;
+		case 19200:
+		  baudrate_enum = B19200;
+		  break;
+		case 38400:
+		  baudrate_enum = B38400;
+		  break;
+		case 57600:
+		  baudrate_enum = B57600;
+		  break;
+		case 115200:
+		  baudrate_enum = B115200;
+		  break;
+		case 230400:
+		  baudrate_enum = B230400;
+		  break;
+		case 460800:
+		  baudrate_enum = B460800;
+		  break;
+		case 500000:
+		  baudrate_enum = B500000;
+		  break;
+		case 576000:
+		  baudrate_enum = B576000;
+		  break;
+		case 921600:
+		  baudrate_enum = B921600;
+		  break;
+		case 1000000:
+		  baudrate_enum = B1000000;
+		  break;
+		case 1152000:
+		  baudrate_enum = B1152000;
+		  break;
+		case 1500000:
+		  baudrate_enum = B1500000;
+		  break;
+		default:
+		  ROS_ERROR_STREAM("Invalid baudrate: " << baudrate <<", defaulting to 9600bps");
+		  break;
+	};		  
 
-    cfsetospeed(&tty, (speed_t)B230400);
-    cfsetispeed(&tty, (speed_t)B230400);
+    cfsetospeed(&tty, baudrate_enum);
+    cfsetispeed(&tty, baudrate_enum);
     
     tty.c_cflag &= ~(CSIZE|CSTOPB|HUPCL|PARENB|CRTSCTS);
     tty.c_cflag |= (CS8|PARODD|CLOCAL|CREAD);
@@ -74,7 +129,7 @@ void SerialCommHal::setInterfaceAttribs(int baudrate)
     tty.c_oflag &= ~OPOST;
 
     /* fetch bytes as they become available */
-    tty.c_cc[VMIN] = 1;
+    tty.c_cc[VMIN] = 0;
     tty.c_cc[VTIME] = 0;
 
     if (tcsetattr(m_fd, TCSANOW, &tty) != 0) {

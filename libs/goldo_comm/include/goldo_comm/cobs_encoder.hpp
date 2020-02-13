@@ -23,6 +23,7 @@ namespace goldo_comm
 		iterator m_write_ptr;
 		iterator m_code_ptr;
 
+		iterator next_ptr(iterator ptr);
 		void inc_ptr(iterator& ptr);
 		ptrdiff_t ptr_diff(iterator a, iterator b);
 	};

@@ -1,8 +1,6 @@
 #include "goldo_comm/comm.hpp"
 #include "goldo_comm/crc32c.hpp"
 
-#include <iostream>
-
 using namespace goldo_comm;
 
 void Comm::setHal(CommHal* hal) { m_hal_ptr = hal; }
@@ -91,7 +89,7 @@ size_t Comm::recv(iovec* vector, size_t count) {
         }        
     }
     m_recv_queue.pop_message();
-    return 0;
+    return total_len;
 }
 
 void Comm::spin(chrono::milliseconds timestamp) {
@@ -116,12 +114,18 @@ bool Comm::spinSend() {
   }
   m_send_queue.pop_message();
   m_encoder.end_message();
-  size_t out_size = 256;
-  uint8_t* out_ptr = m_hal_ptr->lock_write(out_size);
-  std::cout << out_size << "\n";
-  out_size = m_encoder.flush(out_ptr, out_size);
-  m_hal_ptr->unlock_write(out_size);
-  return true;
+
+  while (1)
+  {
+	  size_t out_size = 260;
+	  uint8_t* out_ptr = m_hal_ptr->lock_write(out_size);
+	  out_size = m_encoder.flush(out_ptr, out_size);
+	  m_hal_ptr->unlock_write(out_size);
+	  if (out_size == 0)
+	  {
+		  return true;
+	  }
+  }
 }
 
 bool Comm::spinRecv() {
@@ -151,8 +155,19 @@ bool Comm::spinRecv() {
 void Comm::checkMessage()
 {
     // Check message crc
-    size_t msg_size = m_recv_queue.m_buffer.m_write_ptr - m_recv_queue.m_msg_idx[m_recv_queue.m_write_idx];
-    uint32_t checksum = crc32c(0xffffffff, &*m_recv_queue.m_msg_idx[m_recv_queue.m_write_idx], msg_size);
+	size_t msg_size = 0;
+	uint32_t checksum = 0;
+
+	if (m_recv_queue.m_buffer.m_write_ptr >= m_recv_queue.m_msg_idx[m_recv_queue.m_write_idx])
+	{
+		size_t msg_size = m_recv_queue.m_buffer.m_write_ptr - m_recv_queue.m_msg_idx[m_recv_queue.m_write_idx];
+		uint32_t checksum = crc32c(0xffffffff, &*m_recv_queue.m_msg_idx[m_recv_queue.m_write_idx], msg_size);
+	}
+	else
+	{
+
+	}
+    
 
     m_recv_queue.end_message();
 }

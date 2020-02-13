@@ -33,14 +33,14 @@ namespace goldo_comm
 	{
 	public:
 		~LoopbackCommHal();
-		uint8_t* lock_read(size_t& buffer_size);
-		void unlock_read(size_t buffer_size);
+		uint8_t* lock_read(size_t& buffer_size) override;
+		void unlock_read(size_t buffer_size) override;
 
-		uint8_t* lock_write(size_t& buffer_size);
-		void unlock_write(size_t buffer_size);
+		uint8_t* lock_write(size_t& buffer_size) override;
+		void unlock_write(size_t buffer_size) override;
 
 	private:
-		CircularBuffer<128> m_buffer;
+		CircularBuffer<32> m_buffer;
 	};
 	class Comm
 	{
