@@ -7,7 +7,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "spdlog/spdlog.h"
 #include "goldo_comm/comm.hpp"
 
 #include <iostream>
