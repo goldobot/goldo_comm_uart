@@ -129,6 +129,11 @@ bool Comm::spinSend() {
 }
 
 bool Comm::spinRecv() {
+  if(m_recv_queue.full())
+  {
+      return false;
+  }
+
   size_t buffer_size = m_recv_queue.available_message_size();
   const uint8_t* ptr = m_hal_ptr->lock_read(buffer_size);
   uint8_t* out_ptr = m_recv_queue.lock_write(buffer_size);
@@ -167,8 +172,6 @@ void Comm::checkMessage()
 	{
 
 	}
-    
-
     m_recv_queue.end_message();
 }
 

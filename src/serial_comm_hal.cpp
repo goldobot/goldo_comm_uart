@@ -17,22 +17,37 @@ SerialCommHal::~SerialCommHal()
 }
 
 uint8_t* SerialCommHal::lock_read(size_t& buffer_size)
-{
-	
-	auto ret = read(m_fd, m_read_buffer, buffer_size);
-	if(ret != -1)
-	{
-		buffer_size = ret;
-	} else
-	{
-		buffer_size = 0;
+{	
+    size_t read_size = m_read_buffer_write_idx >= m_read_buffer_read_idx ? sizeof(m_read_buffer) - m_read_buffer_write_idx : m_read_buffer_read_idx - m_read_buffer_write_idx - 1;
+    
+	auto ret = read(m_fd, m_read_buffer + m_read_buffer_write_idx, read_size);
+    
+	if(ret > 0)
+	{        
+		m_read_buffer_write_idx += ret;
+        if(m_read_buffer_write_idx == sizeof(m_read_buffer))
+        {
+            m_read_buffer_write_idx = 0;
+        }
 	};
-	return m_read_buffer;
+    
+    size_t max_size = m_read_buffer_write_idx >= m_read_buffer_read_idx ? m_read_buffer_write_idx - m_read_buffer_read_idx : sizeof(m_read_buffer) - m_read_buffer_read_idx;
+    if(buffer_size > max_size)
+    {
+        buffer_size = max_size;
+    }
+	return m_read_buffer + m_read_buffer_read_idx;
 }
 
 void SerialCommHal::unlock_read(size_t buffer_size)
 {
-	
+    m_recv_trace.write((const char*)m_read_buffer + m_read_buffer_read_idx, buffer_size);
+    m_recv_trace.flush();
+    m_read_buffer_read_idx += buffer_size;
+    if(m_read_buffer_read_idx == sizeof(m_read_buffer))
+    {
+        m_read_buffer_read_idx = 0;
+    };
 }
 
 uint8_t* SerialCommHal::lock_write(size_t& buffer_size)
@@ -58,6 +73,7 @@ void SerialCommHal::open(const char* port_name, int baudrate)
 		ROS_ERROR_STREAM("Failed to open serial port " << port_name);
 	}
     setInterfaceAttribs(baudrate);
+    m_recv_trace.open("/home/goldo/catkin_ws/trace", std::ios::binary);
 }
 
 void SerialCommHal::setInterfaceAttribs(int baudrate)
@@ -123,7 +139,8 @@ void SerialCommHal::setInterfaceAttribs(int baudrate)
     tty.c_cflag |= (CS8|PARODD|CLOCAL|CREAD);
 
     /* setup for non-canonical mode */
-    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+    tty.c_iflag &= ~(BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+    tty.c_iflag |= IGNBRK;
     tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
     tty.c_oflag &= ~OPOST;
 

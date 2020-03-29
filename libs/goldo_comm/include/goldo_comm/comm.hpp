@@ -57,7 +57,7 @@ namespace goldo_comm
 
 		void setHal(CommHal* hal);
 
-	private:
+	//private:
 		MessageQueue<1024, 32> m_send_queue;
 		MessageQueue<1024, 32> m_recv_queue;
 		CobsEncoder m_encoder;

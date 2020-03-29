@@ -32,7 +32,12 @@ void consoleCallback(const std_msgs::String::ConstPtr& msg)
 	}
     g_comm.send(g_message_buffer, msg->data.size() + 2);
 }
-  
+
+void processMessage(uint16_t message_type, const uint8_t* payload, size_t size)
+{
+    ROS_INFO_STREAM("Received message, type: " << message_type << " payload: " << (char*)(payload));    
+};
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "goldo_comm_uart");
@@ -56,20 +61,20 @@ int main(int argc, char **argv)
   SerialCommHal serial_comm_hal;
   serial_comm_hal.open(port_name.c_str(), baudrate);
   g_comm.setHal(&serial_comm_hal);
-  uint64_t i = 1;
+
   while (ros::ok())
   {
     ros::spinOnce();
-	g_comm.spin(std::chrono::milliseconds{i});
+	g_comm.spin(std::chrono::milliseconds{0});    
 	auto ret = g_comm.recv(g_message_buffer, sizeof(g_message_buffer));
-	g_message_buffer[ret] = 0;
-	if(ret > 0)
+
+	while(ret > 0)
 	{
-		ROS_INFO_STREAM("Received message " << i << ": " << (char*)(g_message_buffer+2));
-		i++;
+        g_message_buffer[ret] = 0;
+        processMessage(*(uint16_t*)g_message_buffer, g_message_buffer + 2, ret-2);       
+        ret = g_comm.recv(g_message_buffer, sizeof(g_message_buffer));        
 	}
-    loop_rate.sleep();
-	
+    loop_rate.sleep();	
   }
 
   return 0;
